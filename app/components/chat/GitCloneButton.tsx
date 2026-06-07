@@ -245,26 +245,60 @@ ${fileContents
         </div>
       )}
 
-      {/* GitHub Repository Selector */}
+      {/* GitHub Repository Selector Modal */}
       {selectedProvider === 'github' && (
-        <GitHubRepositorySelector
-          onSelect={(url: string) => handleClone(url)}
-          onClose={() => {
-            setSelectedProvider(null);
-            setIsDialogOpen(false);
-          }}
-        />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor max-w-4xl w-full max-h-[85vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                  Clone from GitHub
+                </h3>
+                <button
+                  onClick={() => {
+                    setSelectedProvider(null);
+                    setIsDialogOpen(false);
+                  }}
+                  className="p-2 rounded-lg bg-transparent hover:bg-bolt-elements-background-depth-1 dark:hover:bg-bolt-elements-background-depth-1 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
+                >
+                  <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
+                </button>
+              </div>
+              <GitHubRepositorySelector
+                onClone={(url: string) => handleClone(url)}
+                className="max-h-[65vh] overflow-y-auto"
+              />
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* GitLab Repository Selector */}
+      {/* GitLab Repository Selector Modal */}
       {selectedProvider === 'gitlab' && (
-        <GitLabRepositorySelector
-          onSelect={(url: string) => handleClone(url)}
-          onClose={() => {
-            setSelectedProvider(null);
-            setIsDialogOpen(false);
-          }}
-        />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor max-w-4xl w-full max-h-[85vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                  Clone from GitLab
+                </h3>
+                <button
+                  onClick={() => {
+                    setSelectedProvider(null);
+                    setIsDialogOpen(false);
+                  }}
+                  className="p-2 rounded-lg bg-transparent hover:bg-bolt-elements-background-depth-1 dark:hover:bg-bolt-elements-background-depth-1 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
+                >
+                  <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
+                </button>
+              </div>
+              <GitLabRepositorySelector
+                onClone={(url: string) => handleClone(url)}
+                className="max-h-[65vh] overflow-y-auto"
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {loading && <LoadingOverlay message="Please wait while we clone the repository..." />}
