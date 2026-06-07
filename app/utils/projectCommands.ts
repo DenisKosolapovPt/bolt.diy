@@ -23,7 +23,8 @@ function makeNonInteractive(command: string): string {
     { pattern: /npx\s+([^@\s]+@?[^\s]*)\s+init/g, replacement: 'echo "y" | npx --yes $1 init --defaults --yes' },
     { pattern: /npx\s+create-([^\s]+)/g, replacement: 'npx --yes create-$1 --template default' },
     { pattern: /npx\s+([^@\s]+@?[^\s]*)\s+add/g, replacement: 'npx --yes $1 add --defaults --yes' },
-    { pattern: /npm\s+install(?!\s+--)/g, replacement: 'npm install --yes --no-audit --no-fund --silent' },
+    // FIXED: removed invalid --yes flag, removed --silent so user can see progress/errors
+    { pattern: /npm\s+install(?!\s+--)/g, replacement: 'npm install --no-audit --no-fund --prefer-offline' },
     { pattern: /yarn\s+add(?!\s+--)/g, replacement: 'yarn add --non-interactive' },
     { pattern: /pnpm\s+add(?!\s+--)/g, replacement: 'pnpm add --yes' },
   ];
@@ -40,8 +41,7 @@ function makeNonInteractive(command: string): string {
 
 export async function detectProjectCommands(files: FileContent[]): Promise<ProjectCommands> {
   const hasFile = (name: string) => files.some((f) => f.path.endsWith(name));
-  const hasFileContent = (name: string, content: string) =>
-    files.some((f) => f.path.endsWith(name) && f.content.includes(content));
+  const hasFileContent = (name: string, content: string) => files.some((f) => f.path.endsWith(name) && f.content.includes(content));
 
   if (hasFile('package.json')) {
     const packageJsonFile = files.find((f) => f.path.endsWith('package.json'));
@@ -52,14 +52,15 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
 
     try {
       const packageJson = JSON.parse(packageJsonFile.content);
+
       const scripts = packageJson?.scripts || {};
       const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies };
 
       // Check if this is a shadcn project
-      const isShadcnProject =
-        hasFileContent('components.json', 'shadcn') ||
+      const hasComponentsJson = hasFile('components.json');
+      const isShadcnProject = hasFileContent('components.json', 'shadcn') ||
         Object.keys(dependencies).some((dep) => dep.includes('shadcn')) ||
-        hasFile('components.json');
+        hasComponentsJson;
 
       // Check for preferred commands in priority order
       const preferredCommands = ['dev', 'start', 'preview'];
@@ -68,8 +69,9 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       // Build setup command with non-interactive handling
       let baseSetupCommand = 'npx update-browserslist-db@latest && npm install';
 
-      // Add shadcn init if it's a shadcn project
-      if (isShadcnProject) {
+      // Only run shadcn init if shadcn is detected BUT components.json doesn't exist yet
+      // (if components.json already exists, the project is already configured)
+      if (isShadcnProject && !hasComponentsJson) {
         baseSetupCommand += ' && npx shadcn@latest init';
       }
 
@@ -87,8 +89,7 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       return {
         type: 'Node.js',
         setupCommand,
-        followupMessage:
-          'Would you like me to inspect package.json to determine the available scripts for running this project?',
+        followupMessage: 'Would you like me to inspect package.json to determine the available scripts for running this project?',
       };
     } catch (error) {
       console.error('Error parsing package.json:', error);
@@ -115,20 +116,16 @@ export function createCommandsMessage(commands: ProjectCommands): Message | null
   let commandString = '';
 
   if (commands.setupCommand) {
-    commandString += `
-<boltAction type="shell">${commands.setupCommand}</boltAction>`;
+    commandString += `<boltAction type="shell">${commands.setupCommand}</boltAction>`;
   }
 
   if (commands.startCommand) {
-    commandString += `
-<boltAction type="start">${commands.startCommand}</boltAction>
-`;
+    commandString += `<boltAction type="start">${commands.startCommand}</boltAction>`;
   }
 
   return {
     role: 'assistant',
-    content: `
-${commands.followupMessage ? `\n\n${commands.followupMessage}` : ''}
+    content: `${commands.followupMessage ? `\n\n${commands.followupMessage}` : ''}
 <boltArtifact id="project-setup" title="Project Setup">
 ${commandString}
 </boltArtifact>`,
@@ -143,10 +140,10 @@ export function escapeBoltArtifactTags(input: string) {
 
   return input.replace(regex, (match, openTag, content, closeTag) => {
     // Escape the opening tag
-    const escapedOpenTag = openTag.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const escapedOpenTag = openTag.replace(/</g, '<').replace(/>/g, '>');
 
     // Escape the closing tag
-    const escapedCloseTag = closeTag.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const escapedCloseTag = closeTag.replace(/</g, '<').replace(/>/g, '>');
 
     // Return the escaped version
     return `${escapedOpenTag}${content}${escapedCloseTag}`;
@@ -159,10 +156,10 @@ export function escapeBoltAActionTags(input: string) {
 
   return input.replace(regex, (match, openTag, content, closeTag) => {
     // Escape the opening tag
-    const escapedOpenTag = openTag.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const escapedOpenTag = openTag.replace(/</g, '<').replace(/>/g, '>');
 
     // Escape the closing tag
-    const escapedCloseTag = closeTag.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const escapedCloseTag = closeTag.replace(/</g, '<').replace(/>/g, '>');
 
     // Return the escaped version
     return `${escapedOpenTag}${content}${escapedCloseTag}`;
@@ -183,14 +180,11 @@ export function createCommandActionsString(commands: ProjectCommands): string {
   let commandString = '';
 
   if (commands.setupCommand) {
-    commandString += `
-<boltAction type="shell">${commands.setupCommand}</boltAction>`;
+    commandString += `<boltAction type="shell">${commands.setupCommand}</boltAction>`;
   }
 
   if (commands.startCommand) {
-    commandString += `
-<boltAction type="start">${commands.startCommand}</boltAction>
-`;
+    commandString += `<boltAction type="start">${commands.startCommand}</boltAction>`;
   }
 
   return commandString;
