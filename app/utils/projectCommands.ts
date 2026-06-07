@@ -67,7 +67,7 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       const availableCommand = preferredCommands.find((cmd) => scripts[cmd]);
 
       // Build setup command with non-interactive handling
-      let baseSetupCommand = 'npx update-browserslist-db@latest && npm install';
+      let baseSetupCommand = 'npm install';
 
       // Only run shadcn init if shadcn is detected BUT components.json doesn't exist yet
       // (if components.json already exists, the project is already configured)
@@ -80,9 +80,8 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       if (availableCommand) {
         return {
           type: 'Node.js',
-          setupCommand,
-          startCommand: `npm run ${availableCommand}`,
-          followupMessage: `Found "${availableCommand}" script in package.json. Running "npm run ${availableCommand}" after installation.`,
+          setupCommand: `${setupCommand} && npm run ${availableCommand}`,
+          followupMessage: `Found "${availableCommand}" script in package.json. Installing dependencies and starting the dev server.`,
         };
       }
 
