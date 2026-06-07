@@ -16,7 +16,7 @@ interface FileContent {
 // Helper function to make any command non-interactive
 function makeNonInteractive(command: string): string {
   // Set environment variables for non-interactive mode
-  const envVars = 'export CI=true DEBIAN_FRONTEND=noninteractive FORCE_COLOR=0';
+  const envVars = 'export CI=true DEBIAN_FRONTEND=noninteractive';
 
   // Common interactive packages and their non-interactive flags
   const interactivePackages = [
@@ -24,7 +24,7 @@ function makeNonInteractive(command: string): string {
     { pattern: /npx\s+create-([^\s]+)/g, replacement: 'npx --yes create-$1 --template default' },
     { pattern: /npx\s+([^@\s]+@?[^\s]*)\s+add/g, replacement: 'npx --yes $1 add --defaults --yes' },
     // FIXED: removed invalid --yes flag, removed --silent so user can see progress/errors
-    { pattern: /npm\s+install(?!\s+--)/g, replacement: 'npm install --no-audit --no-fund --prefer-offline' },
+    { pattern: /npm\s+install(?!\s+--)/g, replacement: 'npm install --no-audit --no-fund --progress=true --loglevel=info' },
     { pattern: /yarn\s+add(?!\s+--)/g, replacement: 'yarn add --non-interactive' },
     { pattern: /pnpm\s+add(?!\s+--)/g, replacement: 'pnpm add --yes' },
   ];
@@ -78,9 +78,11 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       const setupCommand = makeNonInteractive(baseSetupCommand);
 
       if (availableCommand) {
+        const friendlyStart = `echo "📦 Готовлю прототип — устанавливаю зависимости. Это займёт 1-2 минуты при первом запуске..."`;
+        const friendlyReady = `echo "🚀 Зависимости готовы. Запускаю прототип..."`;
         return {
           type: 'Node.js',
-          setupCommand: `${setupCommand} && npm run ${availableCommand}`,
+          setupCommand: `${friendlyStart} && ${setupCommand} && ${friendlyReady} && npm run ${availableCommand}`,
           followupMessage: `Found "${availableCommand}" script in package.json. Installing dependencies and starting the dev server.`,
         };
       }
