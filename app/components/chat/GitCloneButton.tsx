@@ -86,8 +86,11 @@ export default function GitCloneButton({ importChat, className }: GitCloneButton
           }
 
           try {
-            const textContent =
-              encoding === 'utf8' ? content : content instanceof Uint8Array ? textDecoder.decode(content) : '';
+            const textContent = typeof content === 'string'
+              ? content
+              : content instanceof Uint8Array
+                ? textDecoder.decode(content)
+                : '';
 
             if (!textContent) {
               continue;
