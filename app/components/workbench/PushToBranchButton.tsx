@@ -16,6 +16,13 @@ interface ParsedRepository {
   repoName?: string;
 }
 
+function cleanRepoName(value?: string) {
+  return value
+    ?.trim()
+    .replace(/\s+\(fork\)$/i, '')
+    .replace(/\.git$/i, '');
+}
+
 function parseRepositoryFromGitUrl(gitUrl?: string): ParsedRepository {
   if (!gitUrl) {
     return {};
@@ -30,7 +37,7 @@ function parseRepositoryFromGitUrl(gitUrl?: string): ParsedRepository {
 
   return {
     owner: githubMatch.groups.owner,
-    repoName: githubMatch.groups.repoName,
+    repoName: cleanRepoName(githubMatch.groups.repoName),
   };
 }
 
@@ -44,9 +51,9 @@ function parseRepositoryFromDescription(value?: string): ParsedRepository {
     .trim()
     .split('/')
     .pop()
-    ?.replace(/\.git$/i, '');
+    ?.trim();
 
-  return { repoName };
+  return { repoName: cleanRepoName(repoName) };
 }
 
 function createBranchName(email: string, fallbackName: string) {

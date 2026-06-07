@@ -143,7 +143,7 @@ ${fileContents
           messages.push(commandsMessage);
         }
 
-        await importChat(`Git Project: ${repoUrl.split('/').slice(-1)[0]}`, messages);
+        await importChat(`Git Project: ${repoUrl.split('/').slice(-1)[0]}`, messages, { gitUrl: repoUrl });
       }
     } catch (error) {
       console.error('Error during import:', error);
