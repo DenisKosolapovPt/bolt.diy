@@ -120,13 +120,7 @@ export default function VercelConnection() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img
-              className="w-5 h-5 dark:invert"
-              height="24"
-              width="24"
-              crossOrigin="anonymous"
-              src={`https://cdn.simpleicons.org/vercel/black`}
-            />
+            <div className="i-ph:triangle w-5 h-5 text-bolt-elements-textPrimary" />
             <h3 className="text-base font-medium text-bolt-elements-textPrimary">Vercel Connection</h3>
           </div>
         </div>

@@ -33,6 +33,7 @@ import { ChatBox } from './ChatBox';
 import type { DesignScheme } from '~/types/design-scheme';
 import type { ElementInfo } from '~/components/workbench/Inspector';
 import LlmErrorAlert from './LLMApiAlert';
+import type { IChatMetadata } from '~/lib/persistence/db';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 
@@ -58,8 +59,9 @@ interface BaseChatProps {
   sendMessage?: (event: React.UIEvent, messageInput?: string) => void;
   handleInputChange?: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
   enhancePrompt?: () => void;
-  importChat?: (description: string, messages: Message[]) => Promise<void>;
+  importChat?: (description: string, messages: Message[], metadata?: IChatMetadata) => Promise<void>;
   exportChat?: () => void;
+  metadata?: IChatMetadata;
   uploadedFiles?: File[];
   setUploadedFiles?: (files: File[]) => void;
   imageDataList?: string[];
@@ -107,6 +109,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       handleStop,
       importChat,
       exportChat,
+      metadata,
       uploadedFiles = [],
       setUploadedFiles,
       imageDataList = [],
@@ -494,7 +497,12 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           </div>
           <ClientOnly>
             {() => (
-              <Workbench chatStarted={chatStarted} isStreaming={isStreaming} setSelectedElement={setSelectedElement} />
+              <Workbench
+                chatStarted={chatStarted}
+                isStreaming={isStreaming}
+                metadata={metadata}
+                setSelectedElement={setSelectedElement}
+              />
             )}
           </ClientOnly>
         </div>

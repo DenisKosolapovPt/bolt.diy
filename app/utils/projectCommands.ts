@@ -23,8 +23,12 @@ function makeNonInteractive(command: string): string {
     { pattern: /npx\s+([^@\s]+@?[^\s]*)\s+init/g, replacement: 'echo "y" | npx --yes $1 init --defaults --yes' },
     { pattern: /npx\s+create-([^\s]+)/g, replacement: 'npx --yes create-$1 --template default' },
     { pattern: /npx\s+([^@\s]+@?[^\s]*)\s+add/g, replacement: 'npx --yes $1 add --defaults --yes' },
+
     // FIXED: removed invalid --yes flag, removed --silent so user can see progress/errors
-    { pattern: /npm\s+install(?!\s+--)/g, replacement: 'npm install --no-audit --no-fund --progress=true --loglevel=info' },
+    {
+      pattern: /npm\s+install(?!\s+--)/g,
+      replacement: 'npm install --no-audit --no-fund --progress=true --loglevel=info',
+    },
     { pattern: /yarn\s+add(?!\s+--)/g, replacement: 'yarn add --non-interactive' },
     { pattern: /pnpm\s+add(?!\s+--)/g, replacement: 'pnpm add --yes' },
   ];
@@ -41,7 +45,8 @@ function makeNonInteractive(command: string): string {
 
 export async function detectProjectCommands(files: FileContent[]): Promise<ProjectCommands> {
   const hasFile = (name: string) => files.some((f) => f.path.endsWith(name));
-  const hasFileContent = (name: string, content: string) => files.some((f) => f.path.endsWith(name) && f.content.includes(content));
+  const hasFileContent = (name: string, content: string) =>
+    files.some((f) => f.path.endsWith(name) && f.content.includes(content));
 
   if (hasFile('package.json')) {
     const packageJsonFile = files.find((f) => f.path.endsWith('package.json'));
@@ -58,7 +63,8 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
 
       // Check if this is a shadcn project
       const hasComponentsJson = hasFile('components.json');
-      const isShadcnProject = hasFileContent('components.json', 'shadcn') ||
+      const isShadcnProject =
+        hasFileContent('components.json', 'shadcn') ||
         Object.keys(dependencies).some((dep) => dep.includes('shadcn')) ||
         hasComponentsJson;
 
@@ -69,8 +75,10 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       // Build setup command with non-interactive handling
       let baseSetupCommand = 'npm install';
 
-      // Only run shadcn init if shadcn is detected BUT components.json doesn't exist yet
-      // (if components.json already exists, the project is already configured)
+      /*
+       * Only run shadcn init if shadcn is detected BUT components.json doesn't exist yet
+       * (if components.json already exists, the project is already configured)
+       */
       if (isShadcnProject && !hasComponentsJson) {
         baseSetupCommand += ' && npx shadcn@latest init';
       }
@@ -80,6 +88,7 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       if (availableCommand) {
         const friendlyStart = `echo "📦 Готовлю прототип — устанавливаю зависимости. Это займёт 1-2 минуты при первом запуске..."`;
         const friendlyReady = `echo "🚀 Зависимости готовы. Запускаю прототип..."`;
+
         return {
           type: 'Node.js',
           setupCommand: `${friendlyStart} && ${setupCommand} && ${friendlyReady} && npm run ${availableCommand}`,
@@ -90,7 +99,8 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       return {
         type: 'Node.js',
         setupCommand,
-        followupMessage: 'Would you like me to inspect package.json to determine the available scripts for running this project?',
+        followupMessage:
+          'Would you like me to inspect package.json to determine the available scripts for running this project?',
       };
     } catch (error) {
       console.error('Error parsing package.json:', error);

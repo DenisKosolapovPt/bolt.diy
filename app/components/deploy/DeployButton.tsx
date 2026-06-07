@@ -23,6 +23,21 @@ interface DeployButtonProps {
   onGitLabDeploy?: () => Promise<void>;
 }
 
+function BrandIcon({ icon, label, className }: { icon: string; label: string; className?: string }) {
+  return (
+    <span
+      className={classNames(
+        'inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-bolt-elements-background-depth-3 text-bolt-elements-textSecondary',
+        className,
+      )}
+      aria-label={label}
+      role="img"
+    >
+      <span className={icon} />
+    </span>
+  );
+}
+
 export const DeployButton = ({
   onVercelDeploy,
   onNetlifyDeploy,
@@ -158,13 +173,7 @@ export const DeployButton = ({
               disabled={isDeploying || !activePreview || !netlifyConn.user}
               onClick={handleNetlifyDeployClick}
             >
-              <img
-                className="w-5 h-5"
-                height="24"
-                width="24"
-                crossOrigin="anonymous"
-                src="https://cdn.simpleicons.org/netlify"
-              />
+              <BrandIcon icon="i-ph:cloud-arrow-up" label="Netlify" />
               <span className="mx-auto">
                 {!netlifyConn.user ? 'No Netlify Account Connected' : 'Deploy to Netlify'}
               </span>
@@ -181,14 +190,7 @@ export const DeployButton = ({
               disabled={isDeploying || !activePreview || !vercelConn.user}
               onClick={handleVercelDeployClick}
             >
-              <img
-                className="w-5 h-5 bg-black p-1 rounded"
-                height="24"
-                width="24"
-                crossOrigin="anonymous"
-                src="https://cdn.simpleicons.org/vercel/white"
-                alt="vercel"
-              />
+              <BrandIcon icon="i-ph:triangle" label="Vercel" />
               <span className="mx-auto">{!vercelConn.user ? 'No Vercel Account Connected' : 'Deploy to Vercel'}</span>
               {vercelConn.user && <VercelDeploymentLink />}
             </DropdownMenu.Item>
@@ -203,14 +205,7 @@ export const DeployButton = ({
               disabled={isDeploying || !activePreview}
               onClick={handleGitHubDeployClick}
             >
-              <img
-                className="w-5 h-5"
-                height="24"
-                width="24"
-                crossOrigin="anonymous"
-                src="https://cdn.simpleicons.org/github"
-                alt="github"
-              />
+              <BrandIcon icon="i-ph:github-logo" label="GitHub" />
               <span className="mx-auto">Deploy to GitHub</span>
             </DropdownMenu.Item>
 
@@ -224,14 +219,7 @@ export const DeployButton = ({
               disabled={isDeploying || !activePreview || !gitlabIsConnected}
               onClick={handleGitLabDeployClick}
             >
-              <img
-                className="w-5 h-5"
-                height="24"
-                width="24"
-                crossOrigin="anonymous"
-                src="https://cdn.simpleicons.org/gitlab"
-                alt="gitlab"
-              />
+              <BrandIcon icon="i-ph:gitlab-logo" label="GitLab" />
               <span className="mx-auto">{!gitlabIsConnected ? 'No GitLab Account Connected' : 'Deploy to GitLab'}</span>
             </DropdownMenu.Item>
 
@@ -239,14 +227,7 @@ export const DeployButton = ({
               disabled
               className="flex items-center w-full rounded-md px-4 py-2 text-sm text-bolt-elements-textTertiary gap-2 opacity-60 cursor-not-allowed"
             >
-              <img
-                className="w-5 h-5"
-                height="24"
-                width="24"
-                crossOrigin="anonymous"
-                src="https://cdn.simpleicons.org/cloudflare"
-                alt="cloudflare"
-              />
+              <BrandIcon icon="i-ph:cloud" label="Cloudflare" />
               <span className="mx-auto">Deploy to Cloudflare (Coming Soon)</span>
             </DropdownMenu.Item>
           </DropdownMenu.Content>

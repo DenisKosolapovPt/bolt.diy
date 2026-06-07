@@ -60,14 +60,15 @@ export function GitUrlImport() {
 
           const fileContents = filePaths
             .map((filePath) => {
-              const { data: content, encoding } = data[filePath];
+              const { data: content } = data[filePath];
               return {
                 path: filePath,
-                content: typeof content === 'string'
-                  ? content
-                  : content instanceof Uint8Array
-                    ? textDecoder.decode(content)
-                    : '',
+                content:
+                  typeof content === 'string'
+                    ? content
+                    : content instanceof Uint8Array
+                      ? textDecoder.decode(content)
+                      : '',
               };
             })
             .filter((f) => f.content);

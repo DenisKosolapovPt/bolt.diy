@@ -684,7 +684,7 @@ export class WorkbenchStore {
     commitMessage?: string,
     username?: string,
     token?: string,
-    isPrivate: boolean = false,
+    isPrivate: boolean | undefined = undefined,
     branchName: string = 'main',
   ) {
     try {
@@ -718,7 +718,7 @@ export class WorkbenchStore {
           console.log('Repository already exists, using existing repo');
 
           // Check if we need to update visibility of existing repo
-          if (repo.private !== isPrivate) {
+          if (typeof isPrivate === 'boolean' && repo.private !== isPrivate) {
             console.log(
               `Updating repository visibility from ${repo.private ? 'private' : 'public'} to ${isPrivate ? 'private' : 'public'}`,
             );
@@ -752,7 +752,7 @@ export class WorkbenchStore {
             // Create new repository with specified privacy setting
             const createRepoOptions = {
               name: repoName,
-              private: isPrivate,
+              private: isPrivate ?? false,
               auto_init: true,
             };
 
@@ -813,19 +813,56 @@ export class WorkbenchStore {
             const repoRefresh = await octokit.repos.get({ owner, repo: repoName });
             repo = repoRefresh.data;
 
-            // Get the latest commit SHA (assuming main branch, update dynamically if needed)
-            const { data: ref } = await octokit.git.getRef({
+            const defaultBranch = repo.default_branch || 'main';
+            const targetBranch = branchName || defaultBranch;
+            let branchExists = true;
+
+            let ref = await octokit.git
+              .getRef({
+                owner: repo.owner.login,
+                repo: repo.name,
+                ref: `heads/${targetBranch}`,
+              })
+              .then((response) => response.data)
+              .catch(async (error) => {
+                if (error instanceof Error && 'status' in error && error.status === 404) {
+                  branchExists = false;
+
+                  const { data: defaultRef } = await octokit.git.getRef({
+                    owner: repo.owner.login,
+                    repo: repo.name,
+                    ref: `heads/${defaultBranch}`,
+                  });
+
+                  return defaultRef;
+                }
+
+                throw error;
+              });
+
+            if (!branchExists) {
+              ref = await octokit.git
+                .createRef({
+                  owner: repo.owner.login,
+                  repo: repo.name,
+                  ref: `refs/heads/${targetBranch}`,
+                  sha: ref.object.sha,
+                })
+                .then((response) => response.data);
+            }
+
+            const latestCommitSha = ref.object.sha;
+            const { data: latestCommit } = await octokit.git.getCommit({
               owner: repo.owner.login,
               repo: repo.name,
-              ref: `heads/${repo.default_branch || 'main'}`, // Handle dynamic branch
+              commit_sha: latestCommitSha,
             });
-            const latestCommitSha = ref.object.sha;
 
             // Create a new tree
             const { data: newTree } = await octokit.git.createTree({
               owner: repo.owner.login,
               repo: repo.name,
-              base_tree: latestCommitSha,
+              base_tree: latestCommit.tree.sha,
               tree: validBlobs.map((blob) => ({
                 path: blob!.path,
                 mode: '100644',
@@ -847,7 +884,7 @@ export class WorkbenchStore {
             await octokit.git.updateRef({
               owner: repo.owner.login,
               repo: repo.name,
-              ref: `heads/${repo.default_branch || 'main'}`, // Handle dynamic branch
+              ref: `heads/${targetBranch}`,
               sha: newCommit.sha,
             });
 

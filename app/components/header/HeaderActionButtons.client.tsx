@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { workbenchStore } from '~/lib/stores/workbench';
-import { DeployButton } from '~/components/deploy/DeployButton';
 
 interface HeaderActionButtonsProps {
   chatStarted: boolean;
@@ -16,9 +15,6 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
 
   return (
     <div className="flex items-center gap-1">
-      {/* Deploy Button */}
-      {shouldShowButtons && <DeployButton />}
-
       {/* Debug Tools */}
       {shouldShowButtons && (
         <div className="flex border border-bolt-elements-borderColor rounded-md overflow-hidden text-sm">

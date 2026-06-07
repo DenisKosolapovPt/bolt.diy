@@ -10,6 +10,7 @@ import { classNames } from '~/utils/classNames';
 import { Button } from '~/components/ui/Button';
 import type { IChatMetadata } from '~/lib/persistence/db';
 import { X, Github, GitBranch } from 'lucide-react';
+
 // Import the new repository selector components
 import { GitHubRepositorySelector } from '~/components/@settings/tabs/github/components/GitHubRepositorySelector';
 import { GitLabRepositorySelector } from '~/components/@settings/tabs/gitlab/components/GitLabRepositorySelector';
@@ -30,6 +31,7 @@ const IGNORE_PATTERNS = [
   '**/npm-debug.log*',
   '**/yarn-debug.log*',
   '**/yarn-error.log*',
+
   // Include this so npm install runs much faster
   '**/*lock.json',
   '**/*lock.yaml',
@@ -37,7 +39,7 @@ const IGNORE_PATTERNS = [
 
 const ig = ignore().add(IGNORE_PATTERNS);
 
-const MAX_FILE_SIZE = 500 * 1024;    // 500KB per file (was 100KB)
+const MAX_FILE_SIZE = 500 * 1024; // 500KB per file (was 100KB)
 const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 10MB total (was 500KB)
 
 interface GitCloneButtonProps {
@@ -72,7 +74,7 @@ export default function GitCloneButton({ importChat, className }: GitCloneButton
         const fileContents: { path: string; content: string }[] = [];
 
         for (const filePath of filePaths) {
-          const { data: content, encoding } = data[filePath];
+          const { data: content } = data[filePath];
 
           // Skip binary files (only real binaries, not text files)
           if (
@@ -85,11 +87,7 @@ export default function GitCloneButton({ importChat, className }: GitCloneButton
 
           try {
             const textContent =
-              typeof content === 'string'
-                ? content
-                : content instanceof Uint8Array
-                  ? textDecoder.decode(content)
-                  : '';
+              typeof content === 'string' ? content : content instanceof Uint8Array ? textDecoder.decode(content) : '';
 
             if (!textContent) {
               continue;
@@ -132,10 +130,7 @@ export default function GitCloneButton({ importChat, className }: GitCloneButton
           }
 <boltArtifact id="imported-files" title="Git Cloned Files" type="bundled">
 ${fileContents
-  .map(
-    (file) =>
-      `<boltAction type="file" filePath="${file.path}">${escapeBoltTags(file.content)}</boltAction>`,
-  )
+  .map((file) => `<boltAction type="file" filePath="${file.path}">${escapeBoltTags(file.content)}</boltAction>`)
   .join('\n')}
 </boltArtifact>`,
           id: generateId(),
