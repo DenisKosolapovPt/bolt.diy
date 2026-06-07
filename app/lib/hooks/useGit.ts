@@ -202,7 +202,7 @@ const getFs = (
       const relativePath = pathUtils.relative(webcontainer.workdir, path);
 
       if (record.current) {
-        record.current[relativePath] = { data, encoding: options?.encoding };
+        record.current[relativePath] = { data, encoding: options?.encoding || 'utf8' };
       }
 
       try {
