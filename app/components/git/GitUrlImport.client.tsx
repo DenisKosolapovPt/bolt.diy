@@ -63,8 +63,11 @@ export function GitUrlImport() {
               const { data: content, encoding } = data[filePath];
               return {
                 path: filePath,
-                content:
-                  encoding === 'utf8' ? content : content instanceof Uint8Array ? textDecoder.decode(content) : '',
+                content: typeof content === 'string'
+                  ? content
+                  : content instanceof Uint8Array
+                    ? textDecoder.decode(content)
+                    : '',
               };
             })
             .filter((f) => f.content);
