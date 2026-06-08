@@ -51,6 +51,66 @@ function sanitizeText(text: string): string {
   return sanitized.trim();
 }
 
+const IMAGE_OMITTED_NOTICE =
+  '[System notice: One or more images were attached in this conversation, but the selected DeepSeek model/API does not support vision/image input. The image content was not processed. Tell the user that they need to switch to a vision-capable model, such as Gemini, OpenAI GPT-4o/4.1, or Claude, if they want the image to be analyzed.]';
+
+function normalizeMessagesForTextOnlyProvider(messages: Omit<Message, 'id'>[]) {
+  let removedUnsupportedParts = false;
+  let lastUserMessageIndex = -1;
+
+  const normalizedMessages = messages.map((message, index) => {
+    const newMessage = { ...message };
+
+    if (message.role === 'user') {
+      lastUserMessageIndex = index;
+    }
+
+    if (Array.isArray(message.parts)) {
+      const textParts = message.parts.filter((part) => part.type === 'text');
+
+      if (textParts.length !== message.parts.length) {
+        removedUnsupportedParts = true;
+      }
+
+      if (textParts.length > 0) {
+        newMessage.parts = textParts;
+        newMessage.content = textParts
+          .map((part) => ('text' in part ? part.text : ''))
+          .filter(Boolean)
+          .join('\n\n');
+      } else {
+        delete newMessage.parts;
+      }
+    }
+
+    if ('experimental_attachments' in newMessage) {
+      removedUnsupportedParts = true;
+      delete (newMessage as any).experimental_attachments;
+    }
+
+    return newMessage;
+  });
+
+  if (removedUnsupportedParts && lastUserMessageIndex >= 0) {
+    const lastUserMessage = normalizedMessages[lastUserMessageIndex];
+    const content = typeof lastUserMessage.content === 'string' ? lastUserMessage.content : '';
+    const noticeContent = content.includes(IMAGE_OMITTED_NOTICE)
+      ? content
+      : `${content}\n\n${IMAGE_OMITTED_NOTICE}`.trim();
+
+    normalizedMessages[lastUserMessageIndex] = {
+      ...lastUserMessage,
+      content: noticeContent,
+      parts: [{ type: 'text', text: noticeContent }],
+    };
+  }
+
+  return {
+    messages: normalizedMessages,
+    removedUnsupportedParts,
+  };
+}
+
 export async function streamText(props: {
   messages: Omit<Message, 'id'>[];
   env?: Env;
@@ -137,6 +197,15 @@ export async function streamText(props: {
         `MODEL [${currentModel}] not found in provider [${provider.name}]. Falling back to first model. ${modelsList[0].name}`,
       );
       modelDetails = modelsList[0];
+    }
+  }
+
+  if (provider.name === 'Deepseek') {
+    const normalized = normalizeMessagesForTextOnlyProvider(processedMessages);
+    processedMessages = normalized.messages;
+
+    if (normalized.removedUnsupportedParts) {
+      logger.warn('Removed image/file message parts because DeepSeek does not support vision input');
     }
   }
 
